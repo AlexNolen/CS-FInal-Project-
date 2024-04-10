@@ -1,0 +1,177 @@
+import pygame
+import random
+import time
+
+# Initializing pygame
+pygame.init()
+
+# Defining colors
+White = (255, 255, 255)
+Black = (0, 0, 0)
+Red = (255, 0, 0)
+Green = (0, 255, 0)
+Blue = (0, 0, 255)
+Yellow = (255, 255, 0)
+
+# Setting display dimensions
+Width, Height = 600, 400
+Cell_size = 20
+
+# Setting game speed
+Fps = 10
+
+# Defining powerup types
+Powerup_names = {
+    1: "Color Change", #doesnt work properly
+    2: "Teleport", #doesnt work properly
+    3: "Length Multiply",
+    4: "Speed Up"
+}
+
+# Defining snake directions
+UP = 0
+DOWN = 1
+LEFT = 2
+RIGHT = 3
+
+# Initializing screen
+screen = pygame.display.set_mode((Width, Height))
+pygame.display.set_caption("Ultimate Snake Game Project")
+
+clock = pygame.time.Clock()
+
+# Function to generate random positions for powerups and food
+def generate_random_position():
+    x = random.randrange(0, Width - Cell_size, Cell_size)
+    y = random.randrange(0, Height - Cell_size, Cell_size)
+    return x, y
+
+# Function to draw snake
+def draw_snake(snake):
+    for pos in snake:
+        pygame.draw.rect(screen, Green, (pos[0], pos[1], Cell_size, Cell_size))
+
+# Function to draw powerup
+def draw_powerup(powerup):
+    pygame.draw.rect(screen, Yellow, (powerup[0], powerup[1], Cell_size, Cell_size))
+
+# Function to generate random powerup
+def generate_random_powerup():
+    powerup_type = random.choice([1, 2, 3, 4])  
+    powerup_pos = generate_random_position()
+    return powerup_type, powerup_pos
+
+# Function to handle power-up effects
+def apply_powerup(snake, powerup_type):
+    if powerup_type == 1:  # Color Change (doesnt work prop.)
+        snake_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        return snake_color
+    elif powerup_type == 2:  # Teleport (doesnt work prop.)
+        return random.choice([(0, snake[0][1]), (Width - Cell_size, snake[0][1]), (snake[0][0], 0), (snake[0][0], Height - Cell_size)])
+    elif powerup_type == 3:  # Length Multiply
+        snake.extend([snake[-1]] * 3)
+        return snake
+    elif powerup_type == 4:  # Speed Up
+        return Cell_size * 2
+
+# Main function for the game
+def main():
+    snake = [(Width // 2, Height // 2)]
+    snake_direction = RIGHT
+    snake_speed = Cell_size
+    snake_color = Green
+
+    food_pos = generate_random_position()
+    powerup_pos = generate_random_position()
+    powerup_active = True  # Power-up is initially active
+
+    font = pygame.font.Font(None, 36)  # Font for displaying power-up name
+    powerup_text = None
+    powerup_end_time = 0
+
+    next_powerup_time = time.time() + 30  # Set the time for the next power-up appearance
+
+    running = True
+    while running:
+        screen.fill(Black)
+
+        # Handle events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP and snake_direction != DOWN:
+                    snake_direction = UP
+                elif event.key == pygame.K_DOWN and snake_direction != UP:
+                    snake_direction = DOWN
+                elif event.key == pygame.K_LEFT and snake_direction != RIGHT:
+                    snake_direction = LEFT
+                elif event.key == pygame.K_RIGHT and snake_direction != LEFT:
+                    snake_direction = RIGHT
+
+        # Move snake
+        head = snake[0]
+        x, y = head
+        if snake_direction == UP:
+            y -= snake_speed
+        elif snake_direction == DOWN:
+            y += snake_speed
+        elif snake_direction == LEFT:
+            x -= snake_speed
+        elif snake_direction == RIGHT:
+            x += snake_speed
+
+        # Check for collision with powerup
+        if head == powerup_pos:
+            powerup_active = False
+            powerup_type, _ = generate_random_powerup()
+            powerup_name = Powerup_names.get(powerup_type, "Unknown Power-up")
+            powerup_text = font.render(f"Power-up: {powerup_name}", True, White)
+            powerup_end_time = time.time() + 5
+            snake_color = apply_powerup(snake, powerup_type)
+
+        # Check for collision with food
+        if head == food_pos:
+            snake.append(snake[-1])
+            food_pos = generate_random_position()
+
+        # Check for collision with walls
+        if x >= Width:
+            x = 0
+        elif x < 0:
+            x = Width - Cell_size
+        elif y >= Height:
+            y = 0
+        elif y < 0:
+            y = Height - Cell_size
+
+        # Check for collision with itself
+        if (x, y) in snake[1:]:
+            running = False
+            break
+
+        # Update snake length
+        snake = [(x, y)] + snake[:-1]
+
+        # Drawing food
+        pygame.draw.rect(screen, Red, (food_pos[0], food_pos[1], Cell_size, Cell_size))
+
+        # Drawing powerup
+        if powerup_active:
+            draw_powerup(powerup_pos)
+
+        # Drawing snake
+        draw_snake(snake)
+
+        # Drawing power-up text
+        if powerup_text is not None and time.time() < powerup_end_time:
+            screen.blit(powerup_text, (10, 10))
+
+        pygame.display.flip()
+        clock.tick(Fps)
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
+
