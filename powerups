@@ -3,6 +3,8 @@ def generate_random_powerup():
     powerup_type = random.choice(list(Powerup_names.keys()))
     powerup_pos = generate_random_position()
     return powerup_type, powerup_pos
+
+
 # Function to handle power-up effects
 def apply_powerup(snake, powerup_type, snake_color, snake_speed):
     global Fps
@@ -13,6 +15,8 @@ def apply_powerup(snake, powerup_type, snake_color, snake_speed):
     elif powerup_type == 3:  # Speed Up
         Fps += 2  # Increase FPS
     return snake, snake_color, snake_speed
+
+
 # Check for collision with powerup
 if head == powerup_pos:
     powerup_active = False
